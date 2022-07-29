@@ -5,35 +5,15 @@ use std::fmt::Formatter;
 use std::num::ParseIntError;
 
 #[derive(Debug)]
-pub struct FormatError {
-	error: String,
-	cause: Option<Box<dyn Error>>,
-}
-
-impl FormatError {
-	fn new(error: String) -> Self {
-		Self { error, cause: None }
-	}
-
-	fn new_from(error: String, cause: Box<dyn Error>) -> Self {
-		Self {
-			error,
-			cause: Some(cause),
-		}
-	}
-}
+pub struct FormatError(pub String);
 
 impl fmt::Display for FormatError {
 	fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-		write!(f, "format error: {}", self.error)
+		write!(f, "format error: {}", self.0)
 	}
 }
 
-impl Error for FormatError {
-	fn source(&self) -> Option<&(dyn Error + 'static)> {
-		self.cause.as_ref().map(|e| e.as_ref())
-	}
-}
+impl Error for FormatError {}
 
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
@@ -48,27 +28,30 @@ pub struct Color {
 	pub b: u8,
 }
 
-impl TryFrom<ColorSerializer> for Color {
-	type Error = FormatError;
+impl TryFrom<&str> for Color {
+	type Error = String;
 
-	fn try_from(value: ColorSerializer) -> Result<Self, Self::Error> {
-		if value.0.len() != 6 {
-			return Err(FormatError::new(format!("could not parse `{}` as hex color", &value.0)));
+	fn try_from(value: &str) -> Result<Self, Self::Error> {
+		if value.len() != 6 {
+			return Err(format!("could not parse `{}` as hex color", &value));
 		}
 
 		(|| {
 			Ok(Self {
-				r: u8::from_str_radix(&value.0[0..2], 16)?,
-				g: u8::from_str_radix(&value.0[2..4], 16)?,
-				b: u8::from_str_radix(&value.0[4..6], 16)?,
+				r: u8::from_str_radix(&value[0..2], 16)?,
+				g: u8::from_str_radix(&value[2..4], 16)?,
+				b: u8::from_str_radix(&value[4..6], 16)?,
 			})
 		})()
-		.map_err(|e: ParseIntError| {
-			FormatError::new_from(
-				format!("could not parse `{}` as hex color", &value.0),
-				Box::new(e),
-			)
-		})
+		.map_err(|_: ParseIntError| format!("could not parse `{}` as hex color", &value))
+	}
+}
+
+impl TryFrom<ColorSerializer> for Color {
+	type Error = FormatError;
+
+	fn try_from(value: ColorSerializer) -> Result<Self, Self::Error> {
+		TryFrom::try_from(&value.0 as &str).map_err(FormatError)
 	}
 }
 
@@ -107,7 +90,7 @@ pub mod lighting {
 			if (MIN..=MAX).contains(&value.0) {
 				Ok(Self(value.0))
 			} else {
-				Err(FormatError::new(format!("{} was not in range {MIN}..{MAX}", value.0)))
+				Err(FormatError(format!("{} was not in range {MIN}..{MAX}", value.0)))
 			}
 		}
 	}
@@ -118,7 +101,7 @@ pub mod lighting {
 		}
 	}
 
-	#[derive(Serialize, Deserialize, Debug)]
+	#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
 	pub enum Mode {
 		Off,
 		Rainbow,
@@ -133,7 +116,7 @@ pub mod lighting {
 		BreathingSingle,
 	}
 
-	#[derive(Serialize, Deserialize, Debug)]
+	#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
 	pub enum RainbowDirection {
 		Backward,
 		Forward,
@@ -286,8 +269,8 @@ pub mod lighting {
 
 	#[derive(Serialize, Deserialize, Debug)]
 	pub struct BreathingSingle {
-		speed: RangedByte<1, 3>,
-		color: Color,
+		pub speed: RangedByte<1, 3>,
+		pub color: Color,
 	}
 
 	impl Default for BreathingSingle {
@@ -335,15 +318,15 @@ pub mod lighting {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Dpi {
-	enable: bool,
+	pub enable: bool,
 	// TODO: grab defaults from windows software
-	color: Color,
+	pub color: Color,
 	// TODO: check if these needs to have a bounded range w/ dpi cap
-	x_dpi: u8,
-	y_dpi: u8,
+	pub x_dpi: u8,
+	pub y_dpi: u8,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
 pub enum PollingRate {
 	#[serde(rename = "125Hz")]
 	_125,
@@ -355,7 +338,7 @@ pub enum PollingRate {
 	_1000,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
 pub enum LiftoffDistance {
 	#[serde(rename = "2mm")]
 	_2,
@@ -366,10 +349,10 @@ pub enum LiftoffDistance {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
 pub struct Config {
-	lighting: lighting::Lighting,
-	dpi: [Dpi; 6],
-	polling_rate: PollingRate,
-	liftoff_distance: LiftoffDistance,
+	pub lighting: lighting::Lighting,
+	pub dpi: [Dpi; 6],
+	pub polling_rate: PollingRate,
+	pub liftoff_distance: LiftoffDistance,
 }
 
 impl Default for Config {
