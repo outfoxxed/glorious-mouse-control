@@ -1,4 +1,4 @@
-### LED / DPI Packet
+### Main Packet
  - Request Type: `0x21`
  - Request: `0x09`
  - Value: `0x0304`
@@ -6,7 +6,7 @@
 
 #### Type 1
 
-`04 11 00 7b 00 00 00 00 64 06 04` - Unknown
+`04 11 00 7b 00 00 00 00 64 06` - Unknown
 
 `XY` - XY Independent / Polling Rate
  - `X` - XY Independent
@@ -18,7 +18,9 @@
    - `3` - 500Hz
    - `4` - 1000Hz
 
-`11` - Unknown
+`XY` - DPI enable count
+ - `X` - Selected DPI (only counts enabled DPIs, from 1)
+ - `Y` = Enabled DPI count
 
 DPI Enable State (bitset)
 - `11111110` - DPI 1
@@ -45,12 +47,16 @@ DPI
    - `XX XX` - DPI 5 (hundreds)
    - `XX XX` - DPI 6 (hundreds)
 
-```
-                                       00 00 00
-00 ff ff 00 00 00 ff ff 00 00 00 ff 00 ff 00 ff
-ff ff ff 00 00 00 00 00 00
-```
-Unknown
+`00 00 00 00` - Unknown
+
+`XX XX XX` - DPI Color 1 (RGB)
+`XX XX XX` - DPI Color 2 (RGB)
+`XX XX XX` - DPI Color 3 (RGB)
+`XX XX XX` - DPI Color 4 (RGB)
+`XX XX XX` - DPI Color 5 (RGB)
+`XX XX XX` - DPI Color 6 (RGB)
+
+`00 00 00 00 00 00` - Unknown
 
 LED Mode
  - `00` - Off

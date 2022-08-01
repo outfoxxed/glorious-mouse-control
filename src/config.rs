@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::fmt;
-use std::fmt::Formatter;
+use std::fmt::{self, Formatter};
 use std::num::ParseIntError;
+use std::ops::Deref;
 
 #[derive(Debug)]
 pub struct FormatError(pub String);
@@ -57,69 +57,68 @@ impl TryFrom<ColorSerializer> for Color {
 
 impl From<Color> for ColorSerializer {
 	fn from(color: Color) -> Self {
-		ColorSerializer(format!("{:2x}{:2x}{:2x}", color.r, color.g, color.b))
+		ColorSerializer(format!("{:02x}{:02x}{:02x}", color.r, color.g, color.b))
+	}
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(transparent)]
+struct RangedByteSerializer(u8);
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(try_from = "RangedByteSerializer")]
+#[serde(into = "RangedByteSerializer")]
+pub struct RangedByte<const MIN: u8, const MAX: u8>(pub u8);
+
+impl<const MIN: u8, const MAX: u8> Deref for RangedByte<MIN, MAX> {
+	type Target = u8;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl<const MIN: u8, const MAX: u8> TryFrom<RangedByteSerializer> for RangedByte<MIN, MAX> {
+	type Error = FormatError;
+
+	fn try_from(value: RangedByteSerializer) -> Result<Self, Self::Error> {
+		if (MIN..=MAX).contains(&value.0) {
+			Ok(Self(value.0))
+		} else {
+			Err(FormatError(format!("{} was not in range {MIN}..{MAX}", value.0)))
+		}
+	}
+}
+
+impl<const MIN: u8, const MAX: u8> From<RangedByte<MIN, MAX>> for RangedByteSerializer {
+	fn from(byte: RangedByte<MIN, MAX>) -> Self {
+		RangedByteSerializer(*byte)
 	}
 }
 
 pub mod lighting {
-	use super::{Color, FormatError};
+	use super::{Color, RangedByte};
 	use serde::{Deserialize, Serialize};
-	use std::ops::Deref;
 
-	#[derive(Serialize, Deserialize)]
-	#[serde(transparent)]
-	struct RangedByteSerializer(u8);
-
-	#[derive(Serialize, Deserialize, Debug, Clone)]
-	#[serde(try_from = "RangedByteSerializer")]
-	#[serde(into = "RangedByteSerializer")]
-	pub struct RangedByte<const MIN: u8, const MAX: u8>(pub u8);
-
-	impl<const MIN: u8, const MAX: u8> Deref for RangedByte<MIN, MAX> {
-		type Target = u8;
-
-		fn deref(&self) -> &Self::Target {
-			&self.0
-		}
-	}
-
-	impl<const MIN: u8, const MAX: u8> TryFrom<RangedByteSerializer> for RangedByte<MIN, MAX> {
-		type Error = FormatError;
-
-		fn try_from(value: RangedByteSerializer) -> Result<Self, Self::Error> {
-			if (MIN..=MAX).contains(&value.0) {
-				Ok(Self(value.0))
-			} else {
-				Err(FormatError(format!("{} was not in range {MIN}..{MAX}", value.0)))
-			}
-		}
-	}
-
-	impl<const MIN: u8, const MAX: u8> From<RangedByte<MIN, MAX>> for RangedByteSerializer {
-		fn from(byte: RangedByte<MIN, MAX>) -> Self {
-			RangedByteSerializer(*byte)
-		}
-	}
-
-	#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
+	#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 	pub enum Mode {
-		Off,
-		Rainbow,
-		Solid,
-		Breathing,
-		Tail,
-		Fade,
-		WaveSolid,
-		Rave,
-		Random,
-		Wave,
-		BreathingSingle,
+		Off = 0x00,
+		Rainbow = 0x01,
+		Solid = 0x02,
+		Breathing = 0x03,
+		Tail = 0x04,
+		Fade = 0x05,
+		WaveSolid = 0x06,
+		Rave = 0x07,
+		Random = 0x08,
+		Wave = 0x09,
+		BreathingSingle = 0x0a,
 	}
 
-	#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
+	#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 	pub enum RainbowDirection {
-		Backward,
-		Forward,
+		Backward = 0x00,
+		Forward = 0x01,
 	}
 
 	#[derive(Serialize, Deserialize, Debug)]
@@ -241,6 +240,7 @@ pub mod lighting {
 	pub struct Rave {
 		pub brightness: RangedByte<1, 4>,
 		pub speed: RangedByte<1, 3>,
+		pub colors: [Color; 2],
 	}
 
 	impl Default for Rave {
@@ -248,6 +248,18 @@ pub mod lighting {
 			Self {
 				brightness: RangedByte(4),
 				speed: RangedByte(2),
+				colors: [
+					Color {
+						r: 0xff,
+						g: 0x00,
+						b: 0x00,
+					},
+					Color {
+						r: 0x00,
+						g: 0x00,
+						b: 0xff,
+					},
+				],
 			}
 		}
 	}
@@ -326,24 +338,24 @@ pub struct Dpi {
 	pub y_dpi: u8,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 pub enum PollingRate {
 	#[serde(rename = "125Hz")]
-	_125,
+	_125 = 0x01,
 	#[serde(rename = "250Hz")]
-	_250,
+	_250 = 0x02,
 	#[serde(rename = "500Hz")]
-	_500,
+	_500 = 0x03,
 	#[serde(rename = "1000Hz")]
-	_1000,
+	_1000 = 0x04,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, clap::ArgEnum)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 pub enum LiftoffDistance {
 	#[serde(rename = "2mm")]
-	_2,
+	_2 = 0x01,
 	#[serde(rename = "3mm")]
-	_3,
+	_3 = 0x02,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -351,6 +363,7 @@ pub enum LiftoffDistance {
 pub struct Config {
 	pub lighting: lighting::Lighting,
 	pub dpi: [Dpi; 6],
+	pub current_dpi: RangedByte<0, 5>,
 	pub polling_rate: PollingRate,
 	pub liftoff_distance: LiftoffDistance,
 }
@@ -421,6 +434,7 @@ impl Default for Config {
 					y_dpi: 18,
 				},
 			],
+			current_dpi: RangedByte(0),
 			polling_rate: PollingRate::_1000,
 			liftoff_distance: LiftoffDistance::_2,
 		}

@@ -1,4 +1,3 @@
-use crate::config::lighting::RangedByte;
 use crate::config::*;
 use clap::Parser;
 use std::collections::{HashMap, HashSet};
@@ -52,6 +51,9 @@ pub struct Command {
 	/// LED animation speed in Rave mode (1-3)
 	#[clap(long, value_parser = clap::value_parser!(u8).range(1..=3))]
 	pub rave_speed: Option<u8>,
+	/// Set Rave color (<index 0-1>:<hex color>)
+	#[clap(long, value_parser = idx_split_parse::<Color, 0, 1>)]
+	pub rave_color: Vec<(u8, Color)>,
 
 	/// LED brightness in Wave mode (1-4)
 	#[clap(long, value_parser = clap::value_parser!(u8).range(1..=4))]
@@ -69,13 +71,13 @@ pub struct Command {
 
 	// Dpi
 	/// Enable a DPI setting (0-5)
-	#[clap(long, value_parser = clap::value_parser!(u8).range(1..=3))]
+	#[clap(long, value_parser = clap::value_parser!(u8).range(0..=5))]
 	pub enable_dpi: Vec<u8>,
 	/// Disable a DPI setting (0-5)
-	#[clap(long, value_parser = clap::value_parser!(u8).range(1..=3))]
+	#[clap(long, value_parser = clap::value_parser!(u8).range(0..=5))]
 	pub disable_dpi: Vec<u8>,
 	/// Toggle a DPI setting (0-5)
-	#[clap(long, value_parser = clap::value_parser!(u8).range(1..=3))]
+	#[clap(long, value_parser = clap::value_parser!(u8).range(0..=5))]
 	pub toggle_dpi: Vec<u8>,
 	/// Set the color for a DPI setting (<index 0-5>:<hex color>))
 	#[clap(long, value_parser = idx_split_parse::<Color, 0, 5>)]
@@ -89,6 +91,12 @@ pub struct Command {
 	/// Set the Y DPI for a DPI setting (<index 0-5>:<dpi ending in 00>)
 	#[clap(long, value_parser = idx_split_parse_cast::<DpiWrapper, u8, 0, 5>)]
 	pub dpi_y: Vec<(u8, u8)>,
+	/// Reset dpis not listed
+	#[clap(long, value_parser)]
+	pub reset_dpis: bool,
+	/// Set current DPI
+	#[clap(long, value_parser = clap::value_parser!(u8).range(0..=5))]
+	pub select_dpi: Option<u8>,
 
 	/// Set polling rate
 	#[clap(long, value_parser)]
@@ -237,10 +245,7 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 					.unwrap_or(config.lighting.breathing.speed),
 				colors: merge_map(
 					config.lighting.breathing.colors,
-					command
-						.breathing_color
-						.into_iter()
-						.collect::<HashMap<u8, Color>>(),
+					command.breathing_color.into_iter().collect(),
 				),
 			},
 			tail: lighting::Tail {
@@ -268,6 +273,10 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 					.rave_speed
 					.map(RangedByte)
 					.unwrap_or(config.lighting.rave.speed),
+				colors: merge_map(
+					config.lighting.rave.colors,
+					command.rave_color.into_iter().collect(),
+				),
 			},
 			wave: lighting::Wave {
 				brightness: command
@@ -303,7 +312,7 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 								Some(!config.dpi[i as usize].enable)
 							} else if enable_map.contains(&i) {
 								Some(true)
-							} else if disable_map.contains(&i) {
+							} else if disable_map.contains(&i) || command.reset_dpis {
 								Some(false)
 							} else {
 								None
@@ -356,6 +365,10 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 
 			merge_map(config.dpi, dpi_overrides)
 		},
+		current_dpi: command
+			.select_dpi
+			.map(RangedByte)
+			.unwrap_or(config.current_dpi),
 		polling_rate: command.polling_rate.unwrap_or(config.polling_rate),
 		liftoff_distance: command.liftoff_distance.unwrap_or(config.liftoff_distance),
 	}
