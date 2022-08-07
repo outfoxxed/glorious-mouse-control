@@ -188,9 +188,9 @@ Mouse Button Types
 
 `XX XX XX XX` - Middle Mouse Button (One of Mouse Button Types)
 
-`XX XX XX XX` - Forward Side Mouse Button (One of Mouse Button Types)
-
 `XX XX XX XX` - Back Side Mouse Button (One of Mouse Button Types)
+
+`XX XX XX XX` - Forward Side Mouse Button (One of Mouse Button Types)
 
 `XX XX XX XX` - DPI Button (One of Mouse Button Types)
 

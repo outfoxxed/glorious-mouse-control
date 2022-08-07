@@ -9,12 +9,16 @@ Currently provides control for
  - [X] Liftoff distance
  - [ ] Debounce Time
  - [X] RGB
- - [ ] Button Mapping
+ - [X] Button Mapping
 
 Since both targeted mice send all of their settings in only a few large packets,
 configuration state is saved in `~/.config/glorious-mouse-control/config.json` (dependent on your XDG config directory).
 
 All commands that change settings also update the current config. Running with no arguments will apply the current configuration.
+
+### Warning: Running this program *will* reset your mouse configuration*
+*If it was not previously set by this program it will be reset.
+If it was previously set by this program, the config file will be used.
 
 ### Usage
 
@@ -25,6 +29,10 @@ USAGE:
     glorious-mouse-control [OPTIONS]
 
 OPTIONS:
+        --back-button <BACK_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
+
         --breathing-brightness <BREATHING_BRIGHTNESS>
             LED brightness in Breathing mode (1-4)
 
@@ -46,6 +54,10 @@ OPTIONS:
         --dpi <DPI>
             Set the X and Y DPI for a DPI setting (<index 0-5>:<dpi ending in 00>)
 
+        --dpi-button <DPI_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
+
         --dpi-color <DPI_COLOR>
             Set the color for a DPI setting (<index 0-5>:<hex color>))
 
@@ -61,11 +73,23 @@ OPTIONS:
         --fade-speed <FADE_SPEED>
             LED animation speed in Fade mode (1-3)
 
+        --forward-button <FORWARD_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
+
     -h, --help
             Print help information
 
+        --left-button <LEFT_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
+
         --liftoff-distance <LIFTOFF_DISTANCE>
             Set liftoff distance (millimeters) [possible values: 2, 3]
+
+        --middle-button <MIDDLE_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
 
         --mode <MODE>
             LED lighting mode [possible values: off, rainbow, solid, breathing, tail, fade,
@@ -92,6 +116,10 @@ OPTIONS:
         --reset-dpis
             Reset dpis not listed
 
+        --right-button <RIGHT_BUTTON>
+            Left mouse button action [possible values: disable, left-click, right-click,
+            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
+
         --select-dpi <SELECT_DPI>
             Set current DPI
 
@@ -115,6 +143,7 @@ OPTIONS:
 
         --wave-speed <WAVE_SPEED>
             LED animation speed in Wave mode (1-3)
+
 ```
 
 ### Common errors
@@ -144,4 +173,9 @@ glorious-mouse-control --mode breathing --breathing-color 0:ff0000 --breathing-c
 Disable RGB
 ```
 glorious-mouse-control --mode off
+```
+
+Set the DPI button to middle-click
+```
+glorious-mouse-control --dpi-button middle-click
 ```

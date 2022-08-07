@@ -1,8 +1,11 @@
+use std::{
+	error::Error,
+	fmt::{self, Formatter},
+	num::ParseIntError,
+	ops::Deref,
+};
+
 use serde::{Deserialize, Serialize};
-use std::error::Error;
-use std::fmt::{self, Formatter};
-use std::num::ParseIntError;
-use std::ops::Deref;
 
 #[derive(Debug)]
 pub struct FormatError(pub String);
@@ -33,7 +36,7 @@ impl TryFrom<&str> for Color {
 
 	fn try_from(value: &str) -> Result<Self, Self::Error> {
 		if value.len() != 6 {
-			return Err(format!("could not parse `{}` as hex color", &value));
+			return Err(format!("could not parse `{}` as hex color", &value))
 		}
 
 		(|| {
@@ -97,8 +100,9 @@ impl<const MIN: u8, const MAX: u8> From<RangedByte<MIN, MAX>> for RangedByteSeri
 }
 
 pub mod lighting {
-	use super::{Color, RangedByte};
 	use serde::{Deserialize, Serialize};
+
+	use super::{Color, RangedByte};
 
 	#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 	pub enum Mode {
@@ -358,6 +362,44 @@ pub enum LiftoffDistance {
 	_3 = 0x02,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
+pub enum MouseButtonType {
+	Disable = 0x50010000,
+	LeftClick = 0x11010000,
+	RightClick = 0x11020000,
+	MiddleClick = 0x11040000,
+	Back = 0x11080000,
+	Forward = 0x11100000,
+	ScrollUp = 0x12010000,
+	ScrollDown = 0x12ff0000,
+	DpiLoop = 0x41000000,
+	DpiPlus = 0x41010000,
+	DpiMinus = 0x41020000,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MouseButtons {
+	pub left: MouseButtonType,
+	pub right: MouseButtonType,
+	pub middle: MouseButtonType,
+	pub forward: MouseButtonType,
+	pub back: MouseButtonType,
+	pub dpi: MouseButtonType,
+}
+
+impl Default for MouseButtons {
+	fn default() -> Self {
+		Self {
+			left: MouseButtonType::LeftClick,
+			right: MouseButtonType::RightClick,
+			middle: MouseButtonType::MiddleClick,
+			forward: MouseButtonType::Forward,
+			back: MouseButtonType::Back,
+			dpi: MouseButtonType::DpiLoop,
+		}
+	}
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
 pub struct Config {
@@ -366,6 +408,7 @@ pub struct Config {
 	pub current_dpi: RangedByte<0, 5>,
 	pub polling_rate: PollingRate,
 	pub liftoff_distance: LiftoffDistance,
+	pub buttons: MouseButtons,
 }
 
 impl Default for Config {
@@ -437,6 +480,7 @@ impl Default for Config {
 			current_dpi: RangedByte(0),
 			polling_rate: PollingRate::_1000,
 			liftoff_distance: LiftoffDistance::_2,
+			buttons: MouseButtons::default(),
 		}
 	}
 }

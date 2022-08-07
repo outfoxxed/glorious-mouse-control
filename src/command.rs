@@ -1,7 +1,11 @@
-use crate::config::*;
+use std::{
+	collections::{HashMap, HashSet},
+	str::FromStr,
+};
+
 use clap::Parser;
-use std::collections::{HashMap, HashSet};
-use std::str::FromStr;
+
+use crate::config::*;
 
 #[derive(Debug, Parser)]
 pub struct Command {
@@ -105,6 +109,26 @@ pub struct Command {
 	/// Set liftoff distance (millimeters)
 	#[clap(long, value_parser)]
 	pub liftoff_distance: Option<LiftoffDistance>,
+
+	// Mouse buttons
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub left_button: Option<MouseButtonType>,
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub right_button: Option<MouseButtonType>,
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub middle_button: Option<MouseButtonType>,
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub forward_button: Option<MouseButtonType>,
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub back_button: Option<MouseButtonType>,
+	/// Left mouse button action
+	#[clap(long, value_parser)]
+	pub dpi_button: Option<MouseButtonType>,
 }
 
 /// Newtype struct used to format a polling rate value
@@ -333,33 +357,30 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 
 			let dpi_overrides = (0..=5)
 				.map(|i| {
-					(
-						i,
-						Dpi {
-							enable: match dpi_enable_overrides.get(&i) {
-								Some(state) => *state,
-								None => config.dpi[i as usize].enable,
-							},
-							color: match dpi_color_overrides.remove(&i) {
-								Some(color) => color,
-								None => config.dpi[i as usize].color.clone(),
-							},
-							x_dpi: match x_dpi_overrides.get(&i) {
-								Some(x_dpi) => *x_dpi,
-								None => match base_dpi_overrides.get(&i) {
-									Some(base_dpi) => *base_dpi,
-									None => config.dpi[i as usize].x_dpi,
-								},
-							},
-							y_dpi: match y_dpi_overrides.get(&i) {
-								Some(y_dpi) => *y_dpi,
-								None => match base_dpi_overrides.get(&i) {
-									Some(base_dpi) => *base_dpi,
-									None => config.dpi[i as usize].y_dpi,
-								},
+					(i, Dpi {
+						enable: match dpi_enable_overrides.get(&i) {
+							Some(state) => *state,
+							None => config.dpi[i as usize].enable,
+						},
+						color: match dpi_color_overrides.remove(&i) {
+							Some(color) => color,
+							None => config.dpi[i as usize].color.clone(),
+						},
+						x_dpi: match x_dpi_overrides.get(&i) {
+							Some(x_dpi) => *x_dpi,
+							None => match base_dpi_overrides.get(&i) {
+								Some(base_dpi) => *base_dpi,
+								None => config.dpi[i as usize].x_dpi,
 							},
 						},
-					)
+						y_dpi: match y_dpi_overrides.get(&i) {
+							Some(y_dpi) => *y_dpi,
+							None => match base_dpi_overrides.get(&i) {
+								Some(base_dpi) => *base_dpi,
+								None => config.dpi[i as usize].y_dpi,
+							},
+						},
+					})
 				})
 				.collect::<HashMap<u8, Dpi>>();
 
@@ -371,5 +392,13 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 			.unwrap_or(config.current_dpi),
 		polling_rate: command.polling_rate.unwrap_or(config.polling_rate),
 		liftoff_distance: command.liftoff_distance.unwrap_or(config.liftoff_distance),
+		buttons: MouseButtons {
+			left: command.left_button.unwrap_or(config.buttons.left),
+			right: command.right_button.unwrap_or(config.buttons.right),
+			middle: command.middle_button.unwrap_or(config.buttons.middle),
+			forward: command.forward_button.unwrap_or(config.buttons.forward),
+			back: command.back_button.unwrap_or(config.buttons.back),
+			dpi: command.dpi_button.unwrap_or(config.buttons.dpi),
+		},
 	}
 }

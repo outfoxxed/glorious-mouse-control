@@ -1,9 +1,15 @@
-use crate::config::{self, Color, Dpi, RangedByte};
-use crate::error;
+use std::{
+	io::{self, Write},
+	ops::Deref,
+	time::Duration,
+};
+
 use rusb::{Device, DeviceHandle};
-use std::io::{self, Write};
-use std::ops::Deref;
-use std::time::Duration;
+
+use crate::{
+	config::{self, Color, Dpi, MouseButtonType, RangedByte},
+	error,
+};
 
 /// List of USB devices to look for `(<vendor id>, <product id>)`.
 static TARGET_DEVICES: &[(u16, u16)] = &[
@@ -31,14 +37,15 @@ fn find_device() -> Device<rusb::GlobalContext> {
 		.unwrap_or_else(|| error!("could not find usb device"))
 }
 
-/// Builds a packet matching the `Main Packet` section of `packet_spec.md`.
-/// This packet controls DPI values, DPI states, DPI colors, selected DPI, liftoff distance, and RGB.
+/// Builds a packet matching the `Type 1` section of the `Main Packet`
+/// section of `packet_spec.md`. This packet controls DPI values, DPI states,
+/// DPI colors, selected DPI, liftoff distance, and RGB.
 ///
 /// # Panics
 ///
 /// If there is an error writing to the command array (probably won't happen),
-/// or the selected DPI is not enabled (should be checked before `config` is passed here),
-/// the program will exit with an error message.
+/// or the selected DPI is not enabled (should be checked before `config` is
+/// passed here), the program will exit with an error message.
 fn build_main_packet(config: &config::Config) -> [u8; 520] {
 	let mut data = io::Cursor::new([0u8; 520]);
 	macro_rules! write {
@@ -196,6 +203,45 @@ fn build_main_packet(config: &config::Config) -> [u8; 520] {
 	data.into_inner()
 }
 
+/// Builds a packet matching the `Type 2` section of the `Main Packet` section
+/// of `packet_spec.md`. This packet controls mouse button actions.
+///
+/// # Panics
+///
+/// If there is an error writing to the command array (probably won't happen)
+fn build_buttons_packet(config: &config::Config) -> [u8; 520] {
+	let mut data = io::Cursor::new([0u8; 520]);
+	macro_rules! write {
+		($buf:expr, [$($data:tt)*]) => {
+			$buf.write_all(&[$($data)*]).unwrap_or_else(|e| error!("error writing usb command to buffer: {e}"))
+		};
+		[$($data:tt)*] => {
+			write!(data, [$($data)*])
+		};
+	}
+
+	let write_button = |data: &mut io::Cursor<[u8; 520]>, button: &config::MouseButtonType| {
+		data.write_all(&u32::to_be_bytes(*button as u32))
+			.unwrap_or_else(|e| error!("error writing usb command to buffer: {e}"));
+	};
+
+	// unknown data
+	write![0x04, 0x12, 0x00, 0x50, 0x00, 0x00, 0x00, 0x00];
+
+	write_button(&mut data, &config.buttons.left);
+	write_button(&mut data, &config.buttons.right);
+	write_button(&mut data, &config.buttons.middle);
+	write_button(&mut data, &config.buttons.back);
+	write_button(&mut data, &config.buttons.forward);
+	write_button(&mut data, &config.buttons.dpi);
+
+	for _ in 0..13 {
+		write_button(&mut data, &MouseButtonType::Disable);
+	}
+
+	data.into_inner()
+}
+
 /// Manages claiming and release of usb device interfaces. (claimed
 /// interfaces will be released and reattached to the kernel (if applicable)
 /// once this struct is dropped)
@@ -248,7 +294,8 @@ impl<'h, const N: usize> Deref for InterfaceScopeWrapper<'h, N> {
 /// See [`build_main_packet`]
 pub fn apply_config(config: &config::Config) {
 	let device = find_device();
-	let packet = build_main_packet(config);
+	let main_packet = build_main_packet(config);
+	let buttons_packet = build_buttons_packet(config);
 
 	let mut handle = device
 		.open()
@@ -257,6 +304,9 @@ pub fn apply_config(config: &config::Config) {
 	let handle = InterfaceScopeWrapper::wrap(&mut handle, [0, 1]);
 
 	handle
-		.write_control(0x21, 0x09, 0x0304, 0x1, &packet, Duration::from_secs(5))
+		.write_control(0x21, 0x09, 0x0304, 0x1, &main_packet, Duration::from_secs(5))
+		.unwrap();
+	handle
+		.write_control(0x21, 0x09, 0x0304, 0x1, &buttons_packet, Duration::from_secs(5))
 		.unwrap();
 }
