@@ -16,6 +16,11 @@ configuration state is saved in `~/.config/glorious-mouse-control/config.json` (
 
 All commands that change settings also update the current config. Running with no arguments will apply the current configuration.
 
+### Install
+```
+cargo install --git https://github.com/outfoxxed/glorious-mouse-control
+```
+
 ### Warning: Running this program *will* reset your mouse configuration*
 *If it was not previously set by this program it will be reset.
 If it was previously set by this program, the config file will be used.
