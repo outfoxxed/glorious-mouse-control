@@ -344,22 +344,22 @@ pub struct Dpi {
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 pub enum PollingRate {
-	#[serde(rename = "125Hz")]
-	_125 = 0x01,
-	#[serde(rename = "250Hz")]
-	_250 = 0x02,
-	#[serde(rename = "500Hz")]
-	_500 = 0x03,
-	#[serde(rename = "1000Hz")]
-	_1000 = 0x04,
+	#[serde(rename = "125hz")]
+	_125hz = 0x01,
+	#[serde(rename = "250hz")]
+	_250hz = 0x02,
+	#[serde(rename = "500hz")]
+	_500hz = 0x03,
+	#[serde(rename = "1000hz")]
+	_1000hz = 0x04,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 pub enum LiftoffDistance {
 	#[serde(rename = "2mm")]
-	_2 = 0x01,
+	_2mm = 0x01,
 	#[serde(rename = "3mm")]
-	_3 = 0x02,
+	_3mm = 0x02,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
@@ -403,19 +403,19 @@ impl Default for MouseButtons {
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
 pub enum DebounceTime {
 	#[serde(rename = "4ms")]
-	_4 = 0x02,
+	_4ms = 0x02,
 	#[serde(rename = "6ms")]
-	_6 = 0x03,
+	_6ms = 0x03,
 	#[serde(rename = "8ms")]
-	_8 = 0x04,
+	_8ms = 0x04,
 	#[serde(rename = "10ms")]
-	_10 = 0x05,
+	_10ms = 0x05,
 	#[serde(rename = "12ms")]
-	_12 = 0x06,
+	_12ms = 0x06,
 	#[serde(rename = "14ms")]
-	_14 = 0x07,
+	_14ms = 0x07,
 	#[serde(rename = "16ms")]
-	_16 = 0x08,
+	_16ms = 0x08,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -497,9 +497,9 @@ impl Default for Config {
 				},
 			],
 			current_dpi: RangedByte(0),
-			polling_rate: PollingRate::_1000,
-			liftoff_distance: LiftoffDistance::_2,
-			debounce_time: DebounceTime::_10,
+			polling_rate: PollingRate::_1000hz,
+			liftoff_distance: LiftoffDistance::_2mm,
+			debounce_time: DebounceTime::_10ms,
 			buttons: MouseButtons::default(),
 		}
 	}
