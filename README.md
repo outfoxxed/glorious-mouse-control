@@ -1,6 +1,6 @@
 # glorious-mouse-control
 
-CLI control for Glorious Model D and Model O (wired) mice.
+CLI control for Glorious Model D and Model O (wired) mice on Linux.
 
 Currently provides control for
  - [X] DPI Presets
@@ -9,180 +9,78 @@ Currently provides control for
  - [X] Liftoff distance
  - [X] Debounce Time
  - [X] RGB
- - [X] Button Mapping
+ - [ ] Button Mapping
+ 	- [X] Standard Mouse Buttons
+	- [ ] Media controls, etc... (logged but not implemented)
 
 Since both targeted mice send all of their settings in only a few large packets,
-configuration state is saved in `~/.config/glorious-mouse-control/config.json` (dependent on your XDG config directory).
+configuration state is saved in `~/.config/glorious-mouse-control/config.json`.
 
 All commands that change settings also update the current config. Running with no arguments will apply the current configuration.
 
-### Install
-```
+## Install
+
+### Prerequisites:
+ - [Rust Toolchain](https://rustup.rs) (you need this to run `cargo` and build the project)
+ - [Libusb](https://rustup.rs/) (you probably have this already, if not it should be in your package manager)
+
+### Quick install
+```sh
 cargo install --git https://github.com/outfoxxed/glorious-mouse-control
 ```
 
-### Warning: Running this program *will* reset your mouse configuration*
-*If it was not previously set by this program it will be reset.
-If it was previously set by this program, the config file will be used.
-
-### Usage
-
-```
-glorious-mouse-control
-
-USAGE:
-    glorious-mouse-control [OPTIONS]
-
-OPTIONS:
-        --back-button <BACK_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-        --breathing-brightness <BREATHING_BRIGHTNESS>
-            LED brightness in Breathing mode (1-4)
-
-        --breathing-color <BREATHING_COLOR>
-            Set Breathing color (<index 0-6>:<hex color>)
-
-        --breathing-single-color <BREATHING_SINGLE_COLOR>
-            LED color in Solid mode (hex)
-
-        --breathing-single-speed <BREATHING_SINGLE_SPEED>
-            LED animation speed in Breathing (Single) mode (1-3)
-
-        --breathing-speed <BREATHING_SPEED>
-            LED animation speed in Breathing mode (1-3)
-
-        --debounce-time <DEBOUNCE_TIME>
-            Set debounce time (ms) [possible values: 4, 6, 8, 10, 12, 14, 16]
-
-        --disable-dpi <DISABLE_DPI>
-            Disable a DPI setting (0-5)
-
-        --dpi <DPI>
-            Set the X and Y DPI for a DPI setting (<index 0-5>:<dpi ending in 00>)
-
-        --dpi-button <DPI_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-        --dpi-color <DPI_COLOR>
-            Set the color for a DPI setting (<index 0-5>:<hex color>))
-
-        --dpi-x <DPI_X>
-            Set the X DPI for a DPI setting (<index 0-5>:<dpi ending in 00>)
-
-        --dpi-y <DPI_Y>
-            Set the Y DPI for a DPI setting (<index 0-5>:<dpi ending in 00>)
-
-        --enable-dpi <ENABLE_DPI>
-            Enable a DPI setting (0-5)
-
-        --fade-speed <FADE_SPEED>
-            LED animation speed in Fade mode (1-3)
-
-        --forward-button <FORWARD_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-    -h, --help
-            Print help information
-
-        --left-button <LEFT_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-        --liftoff-distance <LIFTOFF_DISTANCE>
-            Set liftoff distance (millimeters) [possible values: 2, 3]
-
-        --middle-button <MIDDLE_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-        --mode <MODE>
-            LED lighting mode [possible values: off, rainbow, solid, breathing, tail, fade,
-            wave-solid, rave, random, wave, breathing-single]
-
-        --polling-rate <POLLING_RATE>
-            Set polling rate [possible values: 125, 250, 500, 1000]
-
-        --rainbow-direction <RAINBOW_DIRECTION>
-            LED animation direction in Rainbow mode [possible values: backward, forward]
-
-        --rainbow-speed <RAINBOW_SPEED>
-            LED animation speed in Rainbow mode (1-3)
-
-        --rave-brightness <RAVE_BRIGHTNESS>
-            LED brightness in Rave mode (1-4)
-
-        --rave-color <RAVE_COLOR>
-            Set Rave color (<index 0-1>:<hex color>)
-
-        --rave-speed <RAVE_SPEED>
-            LED animation speed in Rave mode (1-3)
-
-        --reset-dpis
-            Reset dpis not listed
-
-        --right-button <RIGHT_BUTTON>
-            Left mouse button action [possible values: disable, left-click, right-click,
-            middle-click, back, forward, scroll-up, scroll-down, dpi-loop, dpi-plus, dpi-minus]
-
-        --select-dpi <SELECT_DPI>
-            Set current DPI
-
-        --solid-brightness <SOLID_BRIGHTNESS>
-            LED brightness in Solid mode (1-4)
-
-        --solid-color <SOLID_COLOR>
-            LED color in Solid mode (hex)
-
-        --tail-brightness <TAIL_BRIGHTNESS>
-            LED brightness in Tail mode (1-4)
-
-        --tail-speed <TAIL_SPEED>
-            LED animation speed in Tail mode (1-3)
-
-        --toggle-dpi <TOGGLE_DPI>
-            Toggle a DPI setting (0-5)
-
-        --wave-brightness <WAVE_BRIGHTNESS>
-            LED brightness in Wave mode (1-4)
-
-        --wave-speed <WAVE_SPEED>
-            LED animation speed in Wave mode (1-3)
+### Local build*
+```sh
+git clone https://github.com/outfoxxed/glorious-mouse-control
+cd glorious-mouse-control
+cargo install --path .
 ```
 
-### Common errors
+*The quick install method will also run a local build
+
+## Usage
+### Warning: running glorious-mouse-control will reset all your mouse settings.
+Running this program will replace your mouse's entire config with the one you have defined.
+
+Every time you change an option with CLI flags, your saved configuration will be updated
+along with the configuration on your mouse. If you run the program again previously applied
+settings will be reapplied.
+
+You can find all of the flags and information about them with `glorious-mouse-control --help`.
+Also see the [Usage Examples](#usage-examples)
+
+You can also change the configuration by editing `~/.config/glorious-mouse-control/config.json`
+
+## Common problems
 
 ```
 error: could not open device: Access denied (insufficient permissions)
 ```
 You may need to run the program as root, or grant write access to your mouse some other way.
 
-### Examples
+## Usage Examples
 
 Apply the current configuration:
-```
+```sh
 glorious-mouse-control // no arguments
 ```
 
 Set one DPI and select it
-```
+```sh
 glorious-mouse-control --reset-dpis --enable-dpi 0 --dpi 0:1100 --dpi-color 0:ffffff --select-dpi 0
 ```
 
 Enable RGB in Breathing mode with custom colors
-```
+```sh
 glorious-mouse-control --mode breathing --breathing-color 0:ff0000 --breathing-color 1:00ff00 --breathing-color 2:0000ff --breathing-color 3:ff00ff --breathing-color 4:ffff00 --breathing-color 5:00ffff --breathing-color 6:ffffff --breathing-speed 3
 ```
 
 Disable RGB
-```
+```sh
 glorious-mouse-control --mode off
 ```
 
 Set the DPI button to middle-click
-```
+```sh
 glorious-mouse-control --dpi-button middle-click
 ```
