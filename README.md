@@ -7,7 +7,7 @@ Currently provides control for
  - [X] DPI Colors
  - [X] Selected DPI
  - [X] Liftoff distance
- - [ ] Debounce Time
+ - [X] Debounce Time
  - [X] RGB
  - [X] Button Mapping
 
@@ -28,7 +28,7 @@ If it was previously set by this program, the config file will be used.
 ### Usage
 
 ```
-glorious-mouse-control 
+glorious-mouse-control
 
 USAGE:
     glorious-mouse-control [OPTIONS]
@@ -52,6 +52,9 @@ OPTIONS:
 
         --breathing-speed <BREATHING_SPEED>
             LED animation speed in Breathing mode (1-3)
+
+        --debounce-time <DEBOUNCE_TIME>
+            Set debounce time (ms) [possible values: 4, 6, 8, 10, 12, 14, 16]
 
         --disable-dpi <DISABLE_DPI>
             Disable a DPI setting (0-5)
@@ -148,7 +151,6 @@ OPTIONS:
 
         --wave-speed <WAVE_SPEED>
             LED animation speed in Wave mode (1-3)
-
 ```
 
 ### Common errors

@@ -242,6 +242,16 @@ fn build_buttons_packet(config: &config::Config) -> [u8; 520] {
 	data.into_inner()
 }
 
+/// Builds a packet matching the `Debounce Packet` section of `packet_spec.md`.
+/// This packet controls debounce time.
+fn build_debounce_packet(config: &config::Config) -> [u8; 6] {
+	[
+		0x05, 0x1a, // unknown data
+		config.debounce_time as u8,
+		0x00, 0x00, 0x00,
+	]
+}
+
 /// Manages claiming and release of usb device interfaces. (claimed
 /// interfaces will be released and reattached to the kernel (if applicable)
 /// once this struct is dropped)
@@ -294,8 +304,10 @@ impl<'h, const N: usize> Deref for InterfaceScopeWrapper<'h, N> {
 /// See [`build_main_packet`]
 pub fn apply_config(config: &config::Config) {
 	let device = find_device();
+
 	let main_packet = build_main_packet(config);
 	let buttons_packet = build_buttons_packet(config);
+	let debounce_packet = build_debounce_packet(config);
 
 	let mut handle = device
 		.open()
@@ -308,5 +320,8 @@ pub fn apply_config(config: &config::Config) {
 		.unwrap();
 	handle
 		.write_control(0x21, 0x09, 0x0304, 0x1, &buttons_packet, Duration::from_secs(5))
+		.unwrap();
+	handle
+		.write_control(0x21, 0x09, 0x0305, 0x1, &debounce_packet, Duration::from_secs(5))
 		.unwrap();
 }

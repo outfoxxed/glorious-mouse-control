@@ -214,6 +214,10 @@ Mouse Button Types
 432x `00`
 
 ### Debounce Packet
+ - Request Type: `0x21`
+ - Requiest: `0x09`
+ - Value: `0x0305`
+ - Index: `0x1`
 
 `05 1a` - Unknown
 

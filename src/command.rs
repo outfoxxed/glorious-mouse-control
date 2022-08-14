@@ -110,6 +110,10 @@ pub struct Command {
 	#[clap(long, value_parser)]
 	pub liftoff_distance: Option<LiftoffDistance>,
 
+	/// Set debounce time (ms)
+	#[clap(long, value_parser)]
+	pub debounce_time: Option<DebounceTime>,
+
 	// Mouse buttons
 	/// Left mouse button action
 	#[clap(long, value_parser)]
@@ -392,6 +396,7 @@ pub fn apply_command_config(config: Config, command: Command) -> Config {
 			.unwrap_or(config.current_dpi),
 		polling_rate: command.polling_rate.unwrap_or(config.polling_rate),
 		liftoff_distance: command.liftoff_distance.unwrap_or(config.liftoff_distance),
+		debounce_time: command.debounce_time.unwrap_or(config.debounce_time),
 		buttons: MouseButtons {
 			left: command.left_button.unwrap_or(config.buttons.left),
 			right: command.right_button.unwrap_or(config.buttons.right),

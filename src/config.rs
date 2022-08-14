@@ -400,6 +400,24 @@ impl Default for MouseButtons {
 	}
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, clap::ArgEnum)]
+pub enum DebounceTime {
+	#[serde(rename = "4ms")]
+	_4 = 0x02,
+	#[serde(rename = "6ms")]
+	_6 = 0x03,
+	#[serde(rename = "8ms")]
+	_8 = 0x04,
+	#[serde(rename = "10ms")]
+	_10 = 0x05,
+	#[serde(rename = "12ms")]
+	_12 = 0x06,
+	#[serde(rename = "14ms")]
+	_14 = 0x07,
+	#[serde(rename = "16ms")]
+	_16 = 0x08,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(default)]
 pub struct Config {
@@ -408,6 +426,7 @@ pub struct Config {
 	pub current_dpi: RangedByte<0, 5>,
 	pub polling_rate: PollingRate,
 	pub liftoff_distance: LiftoffDistance,
+	pub debounce_time: DebounceTime,
 	pub buttons: MouseButtons,
 }
 
@@ -480,6 +499,7 @@ impl Default for Config {
 			current_dpi: RangedByte(0),
 			polling_rate: PollingRate::_1000,
 			liftoff_distance: LiftoffDistance::_2,
+			debounce_time: DebounceTime::_10,
 			buttons: MouseButtons::default(),
 		}
 	}
