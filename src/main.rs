@@ -1,5 +1,6 @@
-use clap::Parser;
 use std::fs;
+
+use clap::Parser;
 
 mod command;
 mod config;
@@ -17,18 +18,31 @@ pub(crate) use error;
 fn main() {
 	let cmd = command::Command::parse();
 
-	let config_path = xdg::BaseDirectories::with_prefix("glorious-mouse-control")
-		.unwrap_or_else(|e| error!("error getting XDG directories: {e}"))
-		.place_config_file("config.json")
-		.unwrap_or_else(|e| error!("could not create config file: {e}"));
+	// must be destructured to avoid the lifetime disallowing `apply_command_config`
+	let command::ExtraFlags {
+		save_config,
+		use_config,
+		config_location,
+	} = cmd.flags();
 
-	let config = match fs::read_to_string(&config_path).ok() {
-		Some(config_json) => serde_json::from_str::<config::Config>(&config_json)
-			.unwrap_or_else(|e| error!("could not parse config file: {e}")),
-		None => config::Config::default(),
-	};
+	let config_path = config_location
+		.map(|p| std::path::PathBuf::from(p))
+		.unwrap_or_else(|| {
+			xdg::BaseDirectories::with_prefix("glorious-mouse-control")
+				.unwrap_or_else(|e| error!("error getting XDG directories: {e}"))
+				.place_config_file("config.json")
+				.unwrap_or_else(|e| error!("could not create config file: {e}"))
+		});
 
-	let mut merged_config = command::apply_command_config(config, cmd);
+	let mut merged_config = cmd.apply_command_config(if use_config {
+		match fs::read_to_string(&config_path).ok() {
+			Some(config_json) => serde_json::from_str::<config::Config>(&config_json)
+				.unwrap_or_else(|e| error!("could not parse config file: {e}")),
+			None => config::Config::default(),
+		}
+	} else {
+		config::Config::default()
+	});
 
 	// at least one DPI must be enabled
 	if !merged_config
@@ -58,13 +72,17 @@ fn main() {
 		);
 	}
 
-	fs::write(
-		&config_path,
-		serde_json::to_string_pretty(&merged_config).unwrap_or_else(|e| {
-			error!("could not create a json representation of the current config: {e}")
-		}),
-	)
-	.unwrap_or_else(|e| error!("could not save config file: {e}"));
+	if save_config {
+		fs::write(
+			&config_path,
+			serde_json::to_string_pretty(&merged_config).unwrap_or_else(|e| {
+				error!("could not create a json representation of the current config: {e}")
+			}),
+		)
+		.unwrap_or_else(|e| error!("could not save config file: {e}"));
+	}
 
 	usb::apply_config(&merged_config);
+
+	println!("new configuration applied");
 }

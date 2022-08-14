@@ -133,6 +133,24 @@ pub struct Command {
 	/// Left mouse button action
 	#[clap(long, value_parser)]
 	pub dpi_button: Option<MouseButtonType>,
+
+	// Extra Flags
+	/// Only use flags (ignore config file)
+	#[clap(long, value_parser)]
+	pub noconf: bool,
+	/// Don't save config file (changes will reset next run)
+	#[clap(long, value_parser)]
+	pub nosave: bool,
+	/// Set the config file location
+	#[clap(long, value_parser)]
+	pub config: Option<String>,
+}
+
+/// Extra CLI params that don't go in the config file
+pub struct ExtraFlags<'c> {
+	pub save_config: bool,
+	pub use_config: bool,
+	pub config_location: Option<&'c str>,
 }
 
 /// Newtype struct used to format a polling rate value
@@ -240,170 +258,179 @@ fn merge_map<T, const N: usize>(mut array: [T; N], mut map: HashMap<u8, T>) -> [
 	array
 }
 
-/// Apply the values of a [`Command`] struct to a [`Config`] struct,
-/// returning the [`Config`] struct.
-pub fn apply_command_config(config: Config, command: Command) -> Config {
-	Config {
-		lighting: lighting::Lighting {
-			mode: command.mode.unwrap_or(config.lighting.mode),
-			solid: lighting::Solid {
-				brightness: command
-					.solid_brightness
-					.map(RangedByte)
-					.unwrap_or(config.lighting.solid.brightness),
-				color: command.solid_color.unwrap_or(config.lighting.solid.color),
-			},
-			rainbow: lighting::Rainbow {
-				speed: command
-					.rainbow_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.rainbow.speed),
-				direction: command
-					.rainbow_direction
-					.unwrap_or(config.lighting.rainbow.direction),
-			},
-			breathing: lighting::Breathing {
-				brightness: command
-					.breathing_brightness
-					.map(RangedByte)
-					.unwrap_or(config.lighting.breathing.brightness),
-				speed: command
-					.breathing_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.breathing.speed),
-				colors: merge_map(
-					config.lighting.breathing.colors,
-					command.breathing_color.into_iter().collect(),
-				),
-			},
-			tail: lighting::Tail {
-				brightness: command
-					.tail_brightness
-					.map(RangedByte)
-					.unwrap_or(config.lighting.tail.brightness),
-				speed: command
-					.tail_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.tail.speed),
-			},
-			fade: lighting::Fade {
-				speed: command
-					.fade_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.fade.speed),
-			},
-			rave: lighting::Rave {
-				brightness: command
-					.rave_brightness
-					.map(RangedByte)
-					.unwrap_or(config.lighting.rave.brightness),
-				speed: command
-					.rave_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.rave.speed),
-				colors: merge_map(
-					config.lighting.rave.colors,
-					command.rave_color.into_iter().collect(),
-				),
-			},
-			wave: lighting::Wave {
-				brightness: command
-					.wave_brightness
-					.map(RangedByte)
-					.unwrap_or(config.lighting.wave.brightness),
-				speed: command
-					.wave_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.wave.speed),
-			},
-			breathing_single: lighting::BreathingSingle {
-				speed: command
-					.breathing_single_speed
-					.map(RangedByte)
-					.unwrap_or(config.lighting.breathing_single.speed),
-				color: command
-					.breathing_single_color
-					.unwrap_or(config.lighting.breathing_single.color),
-			},
-		},
-		dpi: {
-			let dpi_enable_overrides = {
-				let toggle_map = command.toggle_dpi.into_iter().collect::<HashSet<u8>>();
-				let enable_map = command.enable_dpi.into_iter().collect::<HashSet<u8>>();
-				let disable_map = command.disable_dpi.into_iter().collect::<HashSet<u8>>();
+impl Command {
+	/// Get extra flags that don't modify the config
+	pub fn flags<'s>(&'s self) -> ExtraFlags<'s> {
+		ExtraFlags {
+			save_config: !self.nosave,
+			use_config: !self.noconf,
+			config_location: self.config.as_ref().map(|s| &**s),
+		}
+	}
 
-				(0..=5)
+	/// Apply the values of a [`Command`] struct to a [`Config`] struct,
+	/// returning the [`Config`] struct.
+	pub fn apply_command_config(self, config: Config) -> Config {
+		Config {
+			lighting: lighting::Lighting {
+				mode: self.mode.unwrap_or(config.lighting.mode),
+				solid: lighting::Solid {
+					brightness: self
+						.solid_brightness
+						.map(RangedByte)
+						.unwrap_or(config.lighting.solid.brightness),
+					color: self.solid_color.unwrap_or(config.lighting.solid.color),
+				},
+				rainbow: lighting::Rainbow {
+					speed: self
+						.rainbow_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.rainbow.speed),
+					direction: self
+						.rainbow_direction
+						.unwrap_or(config.lighting.rainbow.direction),
+				},
+				breathing: lighting::Breathing {
+					brightness: self
+						.breathing_brightness
+						.map(RangedByte)
+						.unwrap_or(config.lighting.breathing.brightness),
+					speed: self
+						.breathing_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.breathing.speed),
+					colors: merge_map(
+						config.lighting.breathing.colors,
+						self.breathing_color.into_iter().collect(),
+					),
+				},
+				tail: lighting::Tail {
+					brightness: self
+						.tail_brightness
+						.map(RangedByte)
+						.unwrap_or(config.lighting.tail.brightness),
+					speed: self
+						.tail_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.tail.speed),
+				},
+				fade: lighting::Fade {
+					speed: self
+						.fade_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.fade.speed),
+				},
+				rave: lighting::Rave {
+					brightness: self
+						.rave_brightness
+						.map(RangedByte)
+						.unwrap_or(config.lighting.rave.brightness),
+					speed: self
+						.rave_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.rave.speed),
+					colors: merge_map(
+						config.lighting.rave.colors,
+						self.rave_color.into_iter().collect(),
+					),
+				},
+				wave: lighting::Wave {
+					brightness: self
+						.wave_brightness
+						.map(RangedByte)
+						.unwrap_or(config.lighting.wave.brightness),
+					speed: self
+						.wave_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.wave.speed),
+				},
+				breathing_single: lighting::BreathingSingle {
+					speed: self
+						.breathing_single_speed
+						.map(RangedByte)
+						.unwrap_or(config.lighting.breathing_single.speed),
+					color: self
+						.breathing_single_color
+						.unwrap_or(config.lighting.breathing_single.color),
+				},
+			},
+			dpi: {
+				let dpi_enable_overrides = {
+					let toggle_map = self.toggle_dpi.into_iter().collect::<HashSet<u8>>();
+					let enable_map = self.enable_dpi.into_iter().collect::<HashSet<u8>>();
+					let disable_map = self.disable_dpi.into_iter().collect::<HashSet<u8>>();
+
+					(0..=5)
+						.map(|i| {
+							(
+								i,
+								if toggle_map.contains(&i) {
+									Some(!config.dpi[i as usize].enable)
+								} else if enable_map.contains(&i) {
+									Some(true)
+								} else if disable_map.contains(&i) || self.reset_dpis {
+									Some(false)
+								} else {
+									None
+								},
+							)
+						})
+						.filter_map(|(i, state)| state.map(|state| (i, state)))
+						.collect::<HashMap<u8, bool>>()
+				};
+
+				let mut dpi_color_overrides =
+					self.dpi_color.into_iter().collect::<HashMap<u8, Color>>();
+				let base_dpi_overrides = self.dpi.into_iter().collect::<HashMap<u8, u8>>();
+				let x_dpi_overrides = self.dpi_x.into_iter().collect::<HashMap<u8, u8>>();
+				let y_dpi_overrides = self.dpi_y.into_iter().collect::<HashMap<u8, u8>>();
+
+				let dpi_overrides = (0..=5)
 					.map(|i| {
-						(
-							i,
-							if toggle_map.contains(&i) {
-								Some(!config.dpi[i as usize].enable)
-							} else if enable_map.contains(&i) {
-								Some(true)
-							} else if disable_map.contains(&i) || command.reset_dpis {
-								Some(false)
-							} else {
-								None
+						(i, Dpi {
+							enable: match dpi_enable_overrides.get(&i) {
+								Some(state) => *state,
+								None => config.dpi[i as usize].enable,
 							},
-						)
+							color: match dpi_color_overrides.remove(&i) {
+								Some(color) => color,
+								None => config.dpi[i as usize].color.clone(),
+							},
+							x_dpi: match x_dpi_overrides.get(&i) {
+								Some(x_dpi) => *x_dpi,
+								None => match base_dpi_overrides.get(&i) {
+									Some(base_dpi) => *base_dpi,
+									None => config.dpi[i as usize].x_dpi,
+								},
+							},
+							y_dpi: match y_dpi_overrides.get(&i) {
+								Some(y_dpi) => *y_dpi,
+								None => match base_dpi_overrides.get(&i) {
+									Some(base_dpi) => *base_dpi,
+									None => config.dpi[i as usize].y_dpi,
+								},
+							},
+						})
 					})
-					.filter_map(|(i, state)| state.map(|state| (i, state)))
-					.collect::<HashMap<u8, bool>>()
-			};
+					.collect::<HashMap<u8, Dpi>>();
 
-			let mut dpi_color_overrides = command
-				.dpi_color
-				.into_iter()
-				.collect::<HashMap<u8, Color>>();
-			let base_dpi_overrides = command.dpi.into_iter().collect::<HashMap<u8, u8>>();
-			let x_dpi_overrides = command.dpi_x.into_iter().collect::<HashMap<u8, u8>>();
-			let y_dpi_overrides = command.dpi_y.into_iter().collect::<HashMap<u8, u8>>();
-
-			let dpi_overrides = (0..=5)
-				.map(|i| {
-					(i, Dpi {
-						enable: match dpi_enable_overrides.get(&i) {
-							Some(state) => *state,
-							None => config.dpi[i as usize].enable,
-						},
-						color: match dpi_color_overrides.remove(&i) {
-							Some(color) => color,
-							None => config.dpi[i as usize].color.clone(),
-						},
-						x_dpi: match x_dpi_overrides.get(&i) {
-							Some(x_dpi) => *x_dpi,
-							None => match base_dpi_overrides.get(&i) {
-								Some(base_dpi) => *base_dpi,
-								None => config.dpi[i as usize].x_dpi,
-							},
-						},
-						y_dpi: match y_dpi_overrides.get(&i) {
-							Some(y_dpi) => *y_dpi,
-							None => match base_dpi_overrides.get(&i) {
-								Some(base_dpi) => *base_dpi,
-								None => config.dpi[i as usize].y_dpi,
-							},
-						},
-					})
-				})
-				.collect::<HashMap<u8, Dpi>>();
-
-			merge_map(config.dpi, dpi_overrides)
-		},
-		current_dpi: command
-			.select_dpi
-			.map(RangedByte)
-			.unwrap_or(config.current_dpi),
-		polling_rate: command.polling_rate.unwrap_or(config.polling_rate),
-		liftoff_distance: command.liftoff_distance.unwrap_or(config.liftoff_distance),
-		debounce_time: command.debounce_time.unwrap_or(config.debounce_time),
-		buttons: MouseButtons {
-			left: command.left_button.unwrap_or(config.buttons.left),
-			right: command.right_button.unwrap_or(config.buttons.right),
-			middle: command.middle_button.unwrap_or(config.buttons.middle),
-			forward: command.forward_button.unwrap_or(config.buttons.forward),
-			back: command.back_button.unwrap_or(config.buttons.back),
-			dpi: command.dpi_button.unwrap_or(config.buttons.dpi),
-		},
+				merge_map(config.dpi, dpi_overrides)
+			},
+			current_dpi: self
+				.select_dpi
+				.map(RangedByte)
+				.unwrap_or(config.current_dpi),
+			polling_rate: self.polling_rate.unwrap_or(config.polling_rate),
+			liftoff_distance: self.liftoff_distance.unwrap_or(config.liftoff_distance),
+			debounce_time: self.debounce_time.unwrap_or(config.debounce_time),
+			buttons: MouseButtons {
+				left: self.left_button.unwrap_or(config.buttons.left),
+				right: self.right_button.unwrap_or(config.buttons.right),
+				middle: self.middle_button.unwrap_or(config.buttons.middle),
+				forward: self.forward_button.unwrap_or(config.buttons.forward),
+				back: self.back_button.unwrap_or(config.buttons.back),
+				dpi: self.dpi_button.unwrap_or(config.buttons.dpi),
+			},
+		}
 	}
 }

@@ -244,6 +244,7 @@ fn build_buttons_packet(config: &config::Config) -> [u8; 520] {
 
 /// Builds a packet matching the `Debounce Packet` section of `packet_spec.md`.
 /// This packet controls debounce time.
+#[rustfmt::skip]
 fn build_debounce_packet(config: &config::Config) -> [u8; 6] {
 	[
 		0x05, 0x1a, // unknown data
