@@ -1,10 +1,20 @@
+# USB Packet Specification
+This is the packet specification used by the program. It was sniffed from
+the official glorious software, and as far as I know, is correct*.
+
+*This specification has had multiple corrections, so its likely theres still
+a few things wrong with it.
+
+Bytes marked as unknown have not been identified by changing settings.
+Even so, they might change something I'm unaware of.
+
 ### Main Packet
  - Request Type: `0x21`
  - Request: `0x09`
  - Value: `0x0304`
  - Index: `0x1`
 
-#### Type 1
+#### Type 1 (DPI + RGB + Polling Rate + LOD)
 
 `04 11 00 7b 00 00 00 00 64 06` - Unknown
 
@@ -50,10 +60,15 @@ DPI
 `00 00 00 00` - Unknown
 
 `XX XX XX` - DPI Color 1 (RGB)
+
 `XX XX XX` - DPI Color 2 (RGB)
+
 `XX XX XX` - DPI Color 3 (RGB)
+
 `XX XX XX` - DPI Color 4 (RGB)
+
 `XX XX XX` - DPI Color 5 (RGB)
+
 `XX XX XX` - DPI Color 6 (RGB)
 
 `00 00 00 00 00 00` - Unknown
@@ -142,7 +157,7 @@ Liftoff Distance (LOD)
 
 390x `00`
 
-#### Type 2
+#### Type 2 (Mouse buttons)
 
 `04 12 00 50 00 00 00 00` - Unknown
 
@@ -200,7 +215,7 @@ Mouse Button Types
 
 ### Debounce Packet
 
-`05 1a`
+`05 1a` - Unknown
 
 Debounce Time
  - `02` - 4ms
