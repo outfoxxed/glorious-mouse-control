@@ -17,7 +17,7 @@ Currently provides control for
 ## Install
 ### Prerequisites:
  - [Rust Toolchain](https://rustup.rs) (you need this to run `cargo` and build the project)
- - [Libusb](https://rustup.rs/) (you probably have this already, if not it should be in your package manager)
+ - [Libusb](https://libusb.info/) (you probably have this already, if not it should be in your package manager)
 
 ### Quick install
 ```sh
