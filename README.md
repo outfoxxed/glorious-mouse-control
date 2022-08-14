@@ -1,4 +1,5 @@
 # glorious-mouse-control
+![](hecker.png)
 
 CLI control for Glorious Model D and Model O (wired) mice on Linux.
 
@@ -13,13 +14,7 @@ Currently provides control for
  	- [X] Standard Mouse Buttons
 	- [ ] Media controls, etc... (logged but not implemented)
 
-Since both targeted mice send all of their settings in only a few large packets,
-configuration state is saved in `~/.config/glorious-mouse-control/config.json`.
-
-All commands that change settings also update the current config. Running with no arguments will apply the current configuration.
-
 ## Install
-
 ### Prerequisites:
  - [Rust Toolchain](https://rustup.rs) (you need this to run `cargo` and build the project)
  - [Libusb](https://rustup.rs/) (you probably have this already, if not it should be in your package manager)
